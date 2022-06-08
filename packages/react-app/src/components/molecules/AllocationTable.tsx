@@ -138,7 +138,7 @@ export function AllocationTable(props: AllocationTableProps): JSX.Element {
 		if (loaded && addressMap && Object.keys(positionMap).length !== positions.length) {
 			const map: PositionMap = {};
 			let total = 0;
-			positions.forEach((position) => {
+			positions.forEach((position: any) => {
 				const { component: address, unit: balance } = position;
 				const symbol = addressMap[address];
 				const quantity = formatUnits(balance, decimalsOf(symbol));
