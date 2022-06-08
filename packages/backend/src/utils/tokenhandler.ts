@@ -1,11 +1,13 @@
 import _ from "lodash";
 import { DateTime } from "luxon";
+import { SwappableTokens } from "../settings";
 
 import {
   AddressMap,
   ExtendedTokenDetailResponse,
   TokenDetails,
 } from "../types";
+import getTokenSetPrice from "./0x/main";
 import { Operations, graphClient } from "./graph";
 import {
   getPricesTokensDaily,
@@ -27,6 +29,16 @@ const getExtendedTokenDetails = async (
       console.error(`[TokenHandler] getExtendedTokenDetails ${e.message}`);
       return {};
     });
+  const address = SwappableTokens.TokenProducts["0x89"][symbol];
+  let price = 0;
+  price = await getTokenSetPrice(address)
+    .then((res) => {
+      return res;
+    })
+    .catch((e) => {
+      console.error(`[TokenHandler-0x] getExtendedTokenDetails ${e.message}`);
+      return 0;
+    });
 
   if (tokenData) {
     return {
@@ -36,18 +48,19 @@ const getExtendedTokenDetails = async (
       changePercent1Day: tokenData.changePercentDay,
       volume1Day: tokenData.volumeDay,
       totalSupply: tokenData.totalSupply,
-      currentPrice: tokenData.currentPrice,
+      currentPrice: price,
       tokenset: tokenData.token.tokensetAllocationsByTokenid || [],
     } as ExtendedTokenDetailResponse;
   }
   return {
+    address,
     symbol,
-    address: "",
     marketCap: 0,
-    currentPrice: 0,
     changePercent1Day: 0,
     volume1Day: 0,
     totalSupply: 0,
+    currentPrice: price,
+    tokenset: [],
   } as ExtendedTokenDetailResponse;
 };
 

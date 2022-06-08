@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 import { getProviderInfo } from 'web3modal';
 
 import { TOAST_TIMEOUT_ALERT } from '../../config';
+import { PRODUCTS } from '../../config/products';
 import { Toaster } from '../../types';
 import { getTokenUrl } from '../../utils';
 import { decimalsOf } from '../../utils/contracts';
@@ -17,10 +18,16 @@ type WalletButtonProps = {
 export default function AddToWalletButton({ symbol, address }: WalletButtonProps): JSX.Element {
 	const toast: Toaster = useToast();
 	const { isConnected, provider } = useWallet();
-
 	const providerInfo = useMemo(() => getProviderInfo(provider), [provider]);
 
 	const handleAdd = useCallback(() => {
+		if (!address) {
+			PRODUCTS.forEach((p) => {
+				if (p.symbol == symbol) {
+					address = p.addresses['0x89'];
+				}
+			});
+		}
 		if (isConnected && provider && address) {
 			showToast(
 				'Adding to wallet',
