@@ -30,3 +30,51 @@
         text-align: left;
     }
 }
+
+.modalBackground {
+    position: fixed;
+    background-color: rgba(21, 6, 55, 0.85);
+    height: 100%;
+    width: 100%;
+    z-index: 21;
+}
+
+.modal {
+    position: fixed;
+    background: #150637;
+    border: 1px solid #857AFD;
+    border-radius: 50px 0px;
+    height: 500px;
+    width: 400px;
+    z-index: 22;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    gap: 2rem;
+}
+
+.modalInputArea {
+    display: flex;
+    justify-content: space-between;
+}
+
+.modalTextInput {
+    border: 1px solid #AADCFE;
+    color: #AADCFE;
+    background-color: transparent;
+    outline: none;
+    padding: 0 1rem;
+    input {
+        background-color: transparent;
+        outline: none;
+    }
+}
+
+.modalCurrencyIndicator {
+    border: 1px solid #AADCFE;
+    border-left: none;
+    color: #AADCFE;
+    background-color: transparent;
+    outline: none;
+    width: fit-content;
+}

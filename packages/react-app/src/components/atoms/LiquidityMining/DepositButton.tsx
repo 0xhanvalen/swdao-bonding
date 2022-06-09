@@ -20,7 +20,7 @@ export default function DepositButton(props: any) {
 				</button>
 			)}
 			{buttonState == 'connected' && (
-				<button className={styles.button}>
+				<button className={styles.button} onClick={props?.onClick}>
 					Deposit <img src={icon} alt="" />
 				</button>
 			)}

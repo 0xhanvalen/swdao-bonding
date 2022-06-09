@@ -6,16 +6,20 @@ import ConnectionIndicator from '../../atoms/ConnectionIndicator/ConnectionIndic
 import DepositButton from '../../atoms/LiquidityMining/DepositButton';
 import styles from './BondingCard.module.scss';
 import { SWDABI } from './SWDABI';
+import { ethers } from '@setprotocol/set-protocol-v2/node_modules/ethers';
 
 const BondingCard: any = (props: any) => {
 	const [cardState, setCardState] = useState<string>('');
 	const [contract, setContract] = useState<any>();
-	const [swdContract, setSWDContract] = useState<any>();
+	const [swxContract, setSWXContract] = useState<any>();
 	const [heldSWD, setHeldSWD] = useState<any>();
+	const [heldSWX, setHeldSWX] = useState<any>();
+	const [displaySWX, setDisplaySWX] = useState<any>();
+	const [isDepositModalOpen, setIsDepositModalOpen] = useState<boolean>(false);
 	const SWDAddress = '0x24Ec3C300Ff53b96937c39b686844dB9E471421e';
 	const contractData = props?.contract;
 	console.log('address: ', contractData?.contract_address);
-	const { isConnected, provider, chainId } = useWallet();
+	const { isConnected, provider, chainId, address } = useWallet();
 	async function getContract() {
 		if (isConnected && provider && chainId && contractData) {
 			const signer = provider.getSigner();
@@ -28,7 +32,7 @@ const BondingCard: any = (props: any) => {
 			);
 			setContract({ read: tempContract.read, write: tempContract.write });
 			tempContract = await createContract(SWDABI, SWDAddress, provider, signer);
-			setSWDContract({ read: tempContract.read, write: tempContract.write });
+			setSWXContract({ read: tempContract.read, write: tempContract.write });
 		}
 	}
 
@@ -36,7 +40,21 @@ const BondingCard: any = (props: any) => {
 		getContract();
 	}, [isConnected, provider, chainId]);
 
-	// useEffect(() => {});
+	async function getSWXBalance() {
+		const temp = await swxContract?.read?.balanceOf(address);
+		setHeldSWX(temp);
+	}
+	useEffect(() => {
+		getSWXBalance();
+	}, [swxContract, address]);
+
+	useEffect(() => {
+		if (typeof heldSWX !== 'undefined') {
+			let tempbal: any = ethers.utils.parseEther(heldSWX.toString());
+			tempbal = tempbal.toLocaleString('en-us', { minimumFractionDigits: 2 });
+			setDisplaySWX(tempbal.toLocaleString());
+		}
+	}, [heldSWX]);
 
 	// useEffect(() => {}, [contract]);
 
@@ -67,10 +85,14 @@ const BondingCard: any = (props: any) => {
 			<Box className={styles.dataContainer} sx={{ backgroundColor: `#150637` }}>
 				<div>
 					<Text sx={{ color: `#857AFD` }}>Available For Deposit</Text>
-					{isConnected && contract?.read ? <></> : <h4 className={styles.disconnected}>0.00</h4>}
+					{isConnected && contract?.read ? (
+						<h4 className={styles.connected}>{displaySWX}</h4>
+					) : (
+						<h4 className={styles.disconnected}>0.00</h4>
+					)}
 				</div>
 				<div>
-					<DepositButton contract={contract} />
+					<DepositButton contract={contract} onClick={() => setIsDepositModalOpen(true)} />
 				</div>
 			</Box>
 			{/* Claim */}
@@ -81,8 +103,36 @@ const BondingCard: any = (props: any) => {
 				</div>
 				<div>{/* Claim Button */}</div>
 			</Box>
+			{isDepositModalOpen && (
+				<BondingDepositModal
+					contractData={contractData}
+					closeModal={() => setIsDepositModalOpen(false)}
+				></BondingDepositModal>
+			)}
 		</Box>
 	);
 };
 
 export default BondingCard;
+
+const BondingDepositModal: any = (props: any) => {
+	const contractData = props?.contractData;
+	return (
+		<>
+			<Box className={styles.modalBackground} onClick={props?.closeModal}></Box>
+			<Box className={styles.modal}>
+				<Heading as="h3" sx={{ color: `white`, fontSize: `1.5rem`, fontWeight: `500` }}>
+					{contractData.product_name}
+				</Heading>
+				<Box className={styles.modalInputArea}>
+					<Box className={styles.modalTextInput}>
+						<input type="text" />
+						<button>max</button>
+					</Box>
+					<Box className={styles.modalCurrencyIndicator}></Box>
+				</Box>
+				<DepositButton />
+			</Box>
+		</>
+	);
+};
