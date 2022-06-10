@@ -15,7 +15,7 @@ const BondingCard: any = (props: any) => {
 	const [heldSWD, setHeldSWD] = useState<any>();
 	const [heldSWX, setHeldSWX] = useState<any>();
 	const [displaySWX, setDisplaySWX] = useState<any>();
-	const [amountToDeposit, setAmountToDeposit] = useState<any>();
+	const [amountToDeposit, setAmountToDeposit] = useState<any>('');
 	const [isDepositModalOpen, setIsDepositModalOpen] = useState<boolean>(false);
 	const SWDAddress = '0x24Ec3C300Ff53b96937c39b686844dB9E471421e';
 	const contractData = props?.contract;
@@ -64,20 +64,15 @@ const BondingCard: any = (props: any) => {
 
 	function handleAmountToDeposit(value: any) {
 		console.log('Handling Change');
-		if (value && typeof value != 'number') {
-			console.log('NAN');
-			setAmountToDeposit('');
+		if (value && isNaN(parseFloat(value))) {
 			return null;
-		}
-		if (value <= heldSWX) {
-			console.log('Too high');
+		} else if (value && value >= heldSWX) {
 			return null;
-		}
-		if (value >= 0) {
-			console.log('Too Low');
+		} else if (value && value <= 0) {
 			return null;
+		} else {
+			setAmountToDeposit(value);
 		}
-		setAmountToDeposit(value);
 	}
 
 	return (
@@ -140,11 +135,11 @@ const BondingCard: any = (props: any) => {
 							<Box className={styles.modalTextInput}>
 								<input
 									type="text"
+									pattern="[0-9]*"
 									value={amountToDeposit}
 									onChange={(e) => {
-										let val: any = e.target.value;
-										val = val * 1;
-										handleAmountToDeposit(val);
+										const validInput = e.target.validity.valid ? e.target.value : amountToDeposit;
+										handleAmountToDeposit(validInput);
 									}}
 								/>
 								<button>max</button>
