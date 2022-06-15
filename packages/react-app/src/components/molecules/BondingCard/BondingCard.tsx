@@ -152,6 +152,7 @@ const BondingCard: any = (props: any) => {
 		}
 	}
 
+	// new func - kwakamole
 	function handlePageClick(event: any) {
 		setBondsPage(event.selected + 1);
 	}
