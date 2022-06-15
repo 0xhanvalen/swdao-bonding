@@ -11,6 +11,7 @@ import { ethers } from '@setprotocol/set-protocol-v2/node_modules/ethers';
 import toast from 'react-hot-toast';
 
 const BondingCard: any = (props: any) => {
+	const amountToView = 8; // max rows for bonds
 	const [cardState, setCardState] = useState<string>('');
 	const [contract, setContract] = useState<any>();
 	const [swxContract, setSWXContract] = useState<any>();
@@ -22,6 +23,7 @@ const BondingCard: any = (props: any) => {
 	const [amountToDeposit, setAmountToDeposit] = useState<any>('');
 	const [isDepositModalOpen, setIsDepositModalOpen] = useState<boolean>(false);
 	const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState<boolean>(false);
+	const [bondsPage, setBondsPage] = useState<number>(1);
 	const SWDAddress = '0x24Ec3C300Ff53b96937c39b686844dB9E471421e';
 	const contractData = props?.contract;
 	console.log('address: ', contractData?.contract_address);
@@ -112,16 +114,21 @@ const BondingCard: any = (props: any) => {
 	}
 
 	async function deposit() {
+		const tempDep = ethers.utils.parseEther(amountToDeposit.toString());
 		if (amountToDeposit == 0) {
 			toast.error('Nothing to deposit');
 			return null;
 		}
 		try {
 			toast('Attempting Deposit');
-			const tx = await contract?.write?.stake();
+			const tx = await contract?.write?.stake(tempDep);
 			const receipt = tx.await();
 			console.log(receipt);
 		} catch (error) {
+			if (tempDep > heldSWX) {
+				toast.error('Not Enough SWX');
+				return null;
+			}
 			toast.error('Deposit Failed');
 			console.error(error);
 		}
@@ -143,6 +150,89 @@ const BondingCard: any = (props: any) => {
 			console.error(error);
 		}
 	}
+
+	const bonds = [
+		{
+			depositDate: '20/10/2022',
+			amount: 100,
+			maturationDate: '20/10/2024',
+		},
+		{
+			depositDate: '21/10/2022',
+			amount: 100,
+			maturationDate: '21/10/2024',
+		},
+		{
+			depositDate: '22/10/2022',
+			amount: 100,
+			maturationDate: '22/10/2024',
+		},
+		{
+			depositDate: '23/10/2022',
+			amount: 100,
+			maturationDate: '23/10/2024',
+		},
+		{
+			depositDate: '24/10/2022',
+			amount: 100,
+			maturationDate: '24/10/2024',
+		},
+		{
+			depositDate: '25/10/2022',
+			amount: 100,
+			maturationDate: '25/10/2024',
+		},
+		{
+			depositDate: '26/10/2022',
+			amount: 100,
+			maturationDate: '26/10/2024',
+		},
+		{
+			depositDate: '27/10/2022',
+			amount: 100,
+			maturationDate: '27/10/2024',
+		},
+		{
+			depositDate: '30/10/2022',
+			amount: 100,
+			maturationDate: '30/10/2024',
+		},
+		{
+			depositDate: '31/10/2022',
+			amount: 100,
+			maturationDate: '31/10/2024',
+		},
+		{
+			depositDate: '1/10/2022',
+			amount: 100,
+			maturationDate: '1/10/2024',
+		},
+		{
+			depositDate: '2/10/2022',
+			amount: 100,
+			maturationDate: '2/10/2024',
+		},
+		{
+			depositDate: '3/10/2022',
+			amount: 100,
+			maturationDate: '3/10/2024',
+		},
+		{
+			depositDate: '4/10/2022',
+			amount: 100,
+			maturationDate: '4/10/2024',
+		},
+		{
+			depositDate: '5/10/2022',
+			amount: 100,
+			maturationDate: '5/10/2024',
+		},
+		{
+			depositDate: '6/10/2022',
+			amount: 100,
+			maturationDate: '6/10/2024',
+		},
+	];
 
 	return (
 		<>
@@ -219,6 +309,56 @@ const BondingCard: any = (props: any) => {
 							<Box className={styles.modalCurrencyIndicator}>SWX</Box>
 						</Box>
 						<DepositButton contract={contract} onClick={() => deposit()} />
+						{/* Bond List */}
+						<Box>
+							<Box className={styles.bondTableHeader} sx={{ color: `#AADCFE` }}>
+								<p>Deposit</p>
+								<p>Amount</p>
+								<p style={{ textAlign: `right` }}>Available</p>
+							</Box>
+							<br />
+							{bonds?.length > 0 &&
+								bonds.map((bond, index) => {
+									if (index < amountToView * bondsPage && index >= amountToView * (bondsPage - 1)) {
+										return (
+											<Box
+												className={styles.bondTableRow}
+												sx={{ color: `#857AFD` }}
+												_hover={{ color: `#AADCFE` }}
+											>
+												<p>{bond.depositDate}</p>
+												<p>{bond.amount}</p>
+												<p style={{ textAlign: `right` }}>{bond.maturationDate}</p>
+											</Box>
+										);
+									}
+								})}
+							{bonds?.length > amountToView && (
+								<Box className={styles.bondTablePages}>
+									<Text
+										onClick={() => setBondsPage(1)}
+										sx={{ color: `#857AFD` }}
+										_hover={{ color: `#AADCFE` }}
+									>
+										1
+									</Text>
+									<Text
+										onClick={() => setBondsPage(2)}
+										sx={{ color: `#857AFD` }}
+										_hover={{ color: `#AADCFE` }}
+									>
+										2
+									</Text>
+									<Text
+										onClick={() => setBondsPage(3)}
+										sx={{ color: `#857AFD` }}
+										_hover={{ color: `#AADCFE` }}
+									>
+										3
+									</Text>
+								</Box>
+							)}
+						</Box>
 					</Box>
 				)}
 			</Box>
