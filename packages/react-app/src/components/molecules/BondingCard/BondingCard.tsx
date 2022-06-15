@@ -151,6 +151,11 @@ const BondingCard: any = (props: any) => {
 		}
 	}
 
+	// new func - kwakamole
+	function handlePageClick(event: any) {
+		setBondsPage(event.selected + 1);
+	}
+
 	const bonds = [
 		{
 			depositDate: '20/10/2022',
