@@ -9,6 +9,7 @@ import styles from './BondingCard.module.scss';
 import { SWDABI } from './SWDABI';
 import { ethers } from '@setprotocol/set-protocol-v2/node_modules/ethers';
 import toast from 'react-hot-toast';
+import ReactPaginate from 'react-paginate';
 
 const BondingCard: any = (props: any) => {
 	const amountToView = 8; // max rows for bonds
@@ -149,6 +150,10 @@ const BondingCard: any = (props: any) => {
 			toast.error('Withdrawal Failed');
 			console.error(error);
 		}
+	}
+
+	function handlePageClick(event: any) {
+		setBondsPage(event.selected + 1);
 	}
 
 	const bonds = [
@@ -334,8 +339,17 @@ const BondingCard: any = (props: any) => {
 									}
 								})}
 							{bonds?.length > amountToView && (
-								<Box className={styles.bondTablePages}>
-									<Text
+								<Box className={styles.bondTablePages} style={{ width: '100%' }}>
+									<ReactPaginate
+										breakLabel="..."
+										nextLabel="next >"
+										onPageChange={handlePageClick}
+										pageRangeDisplayed={5}
+										pageCount={bondsPage / amountToView + (bondsPage % amountToView === 0 ? 0 : 1)}
+										previousLabel="< previous"
+										renderOnZeroPageCount={undefined}
+									/>
+									{/* <Text
 										onClick={() => setBondsPage(1)}
 										sx={{ color: `#857AFD` }}
 										_hover={{ color: `#AADCFE` }}
@@ -355,7 +369,7 @@ const BondingCard: any = (props: any) => {
 										_hover={{ color: `#AADCFE` }}
 									>
 										3
-									</Text>
+									</Text> */}
 								</Box>
 							)}
 						</Box>
