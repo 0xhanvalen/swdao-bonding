@@ -16,6 +16,8 @@ import { routes, titles } from './routes';
 import { SwdDataProvider } from './state/SwdDataProvider';
 import { showErrorToast } from './utils/toasts';
 
+import { Toaster } from 'react-hot-toast';
+
 const TRACKING_ID = 'G-MWVMGM6NLJ';
 ReactGA.initialize(TRACKING_ID);
 
@@ -90,6 +92,7 @@ export function App(): JSX.Element {
 					</ClientContext.Provider>
 				</Suspense>
 			</WalletProvider>
+			<Toaster position="bottom-right" reverseOrder={false} />
 		</RecoilRoot>
 	);
 }

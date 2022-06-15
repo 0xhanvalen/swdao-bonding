@@ -8,6 +8,7 @@ import WithdrawButton from '../../atoms/LiquidityMining/WithdrawButton';
 import styles from './BondingCard.module.scss';
 import { SWDABI } from './SWDABI';
 import { ethers } from '@setprotocol/set-protocol-v2/node_modules/ethers';
+import toast from 'react-hot-toast';
 
 const BondingCard: any = (props: any) => {
 	const [cardState, setCardState] = useState<string>('');
@@ -16,7 +17,7 @@ const BondingCard: any = (props: any) => {
 	const [heldSWD, setHeldSWD] = useState<any>();
 	const [heldSWX, setHeldSWX] = useState<any>();
 	const [displaySWX, setDisplaySWX] = useState<any>();
-	const [widthdrawAmount, setWithdrawAmount] = useState<any>();
+	const [withdrawAmount, setWithdrawAmount] = useState<any>();
 	const [displayWithdrawAmount, setDisplayWithdrawAmount] = useState<any>();
 	const [amountToDeposit, setAmountToDeposit] = useState<any>('');
 	const [isDepositModalOpen, setIsDepositModalOpen] = useState<boolean>(false);
@@ -70,6 +71,7 @@ const BondingCard: any = (props: any) => {
 		if (contract?.read?.balanceAvailable && address) {
 			console.log(contract?.read);
 			const tempWithdrawAmount: any = await contract?.read?.balanceAvailable(address);
+			setWithdrawAmount(tempWithdrawAmount);
 			console.log({ tempWithdrawAmount });
 			let tempbal: any = ethers.utils.parseEther(tempWithdrawAmount.toString());
 			tempbal = tempbal.toLocaleString('en-us', { minimumFractionDigits: 2 });
@@ -81,26 +83,55 @@ const BondingCard: any = (props: any) => {
 		getBalances();
 	}, [contract, address]);
 
-	// function handleAmountToDeposit(value: any) {
-	// 	console.log('Handling Change');
-	// 	if (value && isNaN(parseFloat(value))) {
-	// 		return null;
-	// 	} else if (value && value >= heldSWX) {
-	// 		return null;
-	// 	} else if (value && value <= 0) {
-	// 		return null;
-	// 	} else {
-	// 		setAmountToDeposit(value);
-	// 	}
-	// }
+	const depositMinMax = (value: any) => {
+		// max is heldSWX
+		// min is 0
+		// return !validInput.test(value) || value < 0 || value > 20 || typeof value == 'undefined'
+		// 	? null
+		// 	: value;
+	};
+
+	function handleAmountToDeposit(value: any) {
+		console.log('Handling Change');
+		const validInput = new RegExp('^[0-9]*$');
+		setAmountToDeposit((v: any) => {
+			if (validInput.test(value)) {
+				// true if number or undefined
+				console.log('undefined number check', value);
+				if (value > 0 && value < 20) {
+					return value;
+				} else if (value === '') {
+					return value;
+				} else {
+					return v;
+				}
+			} else {
+				return v;
+			}
+		});
+	}
+
+	async function withdraw() {
+		if (withdrawAmount == 0) {
+			toast.error('Nothing to withdraw');
+			return null;
+		}
+		try {
+			toast('Attempting Withdrawal');
+			const tx = await contract?.write?.withdraw();
+			const receipt = tx.await();
+			// if receipt is confirmed, will have a status === 1, use for toast handling
+			console.log(receipt);
+		} catch (error) {
+			toast.error('Withdrawal Failed');
+			console.error(error);
+		}
+	}
 
 	return (
 		<>
 			{isDepositModalOpen && (
 				<Box className={styles.modalBackground} onClick={() => setIsDepositModalOpen(false)}></Box>
-			)}
-			{isWithdrawModalOpen && (
-				<Box className={styles.modalBackground} onClick={() => setIsWithdrawModalOpen(false)}></Box>
 			)}
 			<Box className={styles.containerWrapper}>
 				<Box
@@ -150,7 +181,7 @@ const BondingCard: any = (props: any) => {
 							)}
 						</div>
 						<div>
-							<WithdrawButton contract={contract} onClick={() => setIsWithdrawModalOpen(true)} />
+							<WithdrawButton contract={contract} onClick={() => withdraw()} />
 						</div>
 					</Box>
 				</Box>
@@ -165,33 +196,13 @@ const BondingCard: any = (props: any) => {
 									type="text"
 									pattern="[0-9]*"
 									value={amountToDeposit}
-									onChange={(e) => setAmountToDeposit(e.target.value)}
+									onChange={(e) => handleAmountToDeposit(e.target.value)}
 								/>
 								<button onClick={() => fillMaxTokens()}>max</button>
 							</Box>
 							<Box className={styles.modalCurrencyIndicator}>SWX</Box>
 						</Box>
-						<DepositButton />
-					</Box>
-				)}
-				{isWithdrawModalOpen && (
-					<Box className={styles.modal}>
-						<Heading as="h3" sx={{ color: `white`, fontSize: `1.5rem`, fontWeight: `500` }}>
-							{contractData.product_name}
-						</Heading>
-						<Box className={styles.modalInputArea}>
-							<Box className={styles.modalTextInput}>
-								<input
-									type="text"
-									pattern="[0-9]*"
-									value={amountToDeposit}
-									onChange={(e) => setAmountToDeposit(e.target.value)}
-								/>
-								<button onClick={() => fillMaxTokens()}>max</button>
-							</Box>
-							<Box className={styles.modalCurrencyIndicator}>SWX</Box>
-						</Box>
-						<DepositButton />
+						<DepositButton contract={contract} />
 					</Box>
 				)}
 			</Box>
