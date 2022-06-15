@@ -111,6 +111,22 @@ const BondingCard: any = (props: any) => {
 		});
 	}
 
+	async function deposit() {
+		if (amountToDeposit == 0) {
+			toast.error('Nothing to deposit');
+			return null;
+		}
+		try {
+			toast('Attempting Deposit');
+			const tx = await contract?.write?.stake();
+			const receipt = tx.await();
+			console.log(receipt);
+		} catch (error) {
+			toast.error('Deposit Failed');
+			console.error(error);
+		}
+	}
+
 	async function withdraw() {
 		if (withdrawAmount == 0) {
 			toast.error('Nothing to withdraw');
@@ -202,7 +218,7 @@ const BondingCard: any = (props: any) => {
 							</Box>
 							<Box className={styles.modalCurrencyIndicator}>SWX</Box>
 						</Box>
-						<DepositButton contract={contract} />
+						<DepositButton contract={contract} onClick={() => deposit()} />
 					</Box>
 				)}
 			</Box>
