@@ -4,6 +4,7 @@ import { Box, Heading, Text } from '@chakra-ui/react';
 import createContract from '../../../utils/contractMaker';
 import ConnectionIndicator from '../../atoms/ConnectionIndicator/ConnectionIndicator';
 import DepositButton from '../../atoms/LiquidityMining/DepositButton';
+import WithdrawButton from '../../atoms/LiquidityMining/WithdrawButton';
 import styles from './BondingCard.module.scss';
 import { SWDABI } from './SWDABI';
 import { ethers } from '@setprotocol/set-protocol-v2/node_modules/ethers';
@@ -15,8 +16,11 @@ const BondingCard: any = (props: any) => {
 	const [heldSWD, setHeldSWD] = useState<any>();
 	const [heldSWX, setHeldSWX] = useState<any>();
 	const [displaySWX, setDisplaySWX] = useState<any>();
+	const [widthdrawAmount, setWithdrawAmount] = useState<any>();
+	const [displayWithdrawAmount, setDisplayWithdrawAmount] = useState<any>();
 	const [amountToDeposit, setAmountToDeposit] = useState<any>('');
 	const [isDepositModalOpen, setIsDepositModalOpen] = useState<boolean>(false);
+	const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState<boolean>(false);
 	const SWDAddress = '0x24Ec3C300Ff53b96937c39b686844dB9E471421e';
 	const contractData = props?.contract;
 	console.log('address: ', contractData?.contract_address);
@@ -62,23 +66,41 @@ const BondingCard: any = (props: any) => {
 		setAmountToDeposit(heldSWX);
 	}
 
-	function handleAmountToDeposit(value: any) {
-		console.log('Handling Change');
-		if (value && isNaN(parseFloat(value))) {
-			return null;
-		} else if (value && value >= heldSWX) {
-			return null;
-		} else if (value && value <= 0) {
-			return null;
-		} else {
-			setAmountToDeposit(value);
+	async function getBalances() {
+		if (contract?.read?.balanceAvailable && address) {
+			console.log(contract?.read);
+			const tempWithdrawAmount: any = await contract?.read?.balanceAvailable(address);
+			console.log({ tempWithdrawAmount });
+			let tempbal: any = ethers.utils.parseEther(tempWithdrawAmount.toString());
+			tempbal = tempbal.toLocaleString('en-us', { minimumFractionDigits: 2 });
+			setDisplayWithdrawAmount(tempbal.toLocaleString());
 		}
 	}
+
+	useEffect(() => {
+		getBalances();
+	}, [contract, address]);
+
+	// function handleAmountToDeposit(value: any) {
+	// 	console.log('Handling Change');
+	// 	if (value && isNaN(parseFloat(value))) {
+	// 		return null;
+	// 	} else if (value && value >= heldSWX) {
+	// 		return null;
+	// 	} else if (value && value <= 0) {
+	// 		return null;
+	// 	} else {
+	// 		setAmountToDeposit(value);
+	// 	}
+	// }
 
 	return (
 		<>
 			{isDepositModalOpen && (
 				<Box className={styles.modalBackground} onClick={() => setIsDepositModalOpen(false)}></Box>
+			)}
+			{isWithdrawModalOpen && (
+				<Box className={styles.modalBackground} onClick={() => setIsWithdrawModalOpen(false)}></Box>
 			)}
 			<Box className={styles.containerWrapper}>
 				<Box
@@ -121,9 +143,15 @@ const BondingCard: any = (props: any) => {
 					<Box className={styles.dataContainer} sx={{ backgroundColor: `#150637` }}>
 						<div>
 							<Text sx={{ color: `#857AFD` }}>Available to Withdraw</Text>
-							{isConnected ? <></> : <h4 className={styles.disconnected}>0.00</h4>}
+							{isConnected ? (
+								<h4 className={styles.connected}>{displayWithdrawAmount}</h4>
+							) : (
+								<h4 className={styles.disconnected}>0.00</h4>
+							)}
 						</div>
-						<div>{/* Claim Button */}</div>
+						<div>
+							<WithdrawButton contract={contract} onClick={() => setIsWithdrawModalOpen(true)} />
+						</div>
 					</Box>
 				</Box>
 				{isDepositModalOpen && (
@@ -137,12 +165,29 @@ const BondingCard: any = (props: any) => {
 									type="text"
 									pattern="[0-9]*"
 									value={amountToDeposit}
-									onChange={(e) => {
-										const validInput = e.target.validity.valid ? e.target.value : amountToDeposit;
-										handleAmountToDeposit(validInput);
-									}}
+									onChange={(e) => setAmountToDeposit(e.target.value)}
 								/>
-								<button>max</button>
+								<button onClick={() => fillMaxTokens()}>max</button>
+							</Box>
+							<Box className={styles.modalCurrencyIndicator}>SWX</Box>
+						</Box>
+						<DepositButton />
+					</Box>
+				)}
+				{isWithdrawModalOpen && (
+					<Box className={styles.modal}>
+						<Heading as="h3" sx={{ color: `white`, fontSize: `1.5rem`, fontWeight: `500` }}>
+							{contractData.product_name}
+						</Heading>
+						<Box className={styles.modalInputArea}>
+							<Box className={styles.modalTextInput}>
+								<input
+									type="text"
+									pattern="[0-9]*"
+									value={amountToDeposit}
+									onChange={(e) => setAmountToDeposit(e.target.value)}
+								/>
+								<button onClick={() => fillMaxTokens()}>max</button>
 							</Box>
 							<Box className={styles.modalCurrencyIndicator}>SWX</Box>
 						</Box>

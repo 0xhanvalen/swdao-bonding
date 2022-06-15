@@ -24,12 +24,12 @@ const request = axios.create({
 });
 
 function handleError(error: any) {
-	console.log(error);
+	//console.log(error);
 	if (error.response) {
 		// Request made and server responded
-		console.log(error.response.data);
-		console.log(error.response.status);
-		console.log(error.response.headers);
+		// console.log(error.response.data);
+		// console.log(error.response.status);
+		// console.log(error.response.headers);
 		return error.response;
 	}
 	return null;
