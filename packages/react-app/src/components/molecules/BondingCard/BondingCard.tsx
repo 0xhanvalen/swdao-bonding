@@ -9,6 +9,7 @@ import styles from './BondingCard.module.scss';
 import { SWDABI } from './SWDABI';
 import { ethers } from '@setprotocol/set-protocol-v2/node_modules/ethers';
 import toast from 'react-hot-toast';
+import ReactPaginate from 'react-paginate';
 
 const BondingCard: any = (props: any) => {
 	const amountToView = 8; // max rows for bonds
@@ -23,11 +24,27 @@ const BondingCard: any = (props: any) => {
 	const [amountToDeposit, setAmountToDeposit] = useState<any>('');
 	const [isDepositModalOpen, setIsDepositModalOpen] = useState<boolean>(false);
 	const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState<boolean>(false);
+	const [rewardRate, setRewardRate] = useState<any>();
+	const [APY, setAPY] = useState<any>();
+	const [MPY, setMPY] = useState<any>();
+	const [WPY, setWPY] = useState<any>();
 	const [bondsPage, setBondsPage] = useState<number>(1);
+	const [bonds, setBonds] = useState<any>([]);
 	const SWDAddress = '0x24Ec3C300Ff53b96937c39b686844dB9E471421e';
 	const contractData = props?.contract;
 	console.log('address: ', contractData?.contract_address);
 	const { isConnected, provider, chainId, address } = useWallet();
+
+	const alchemyProvider = new ethers.providers.AlchemyProvider(
+		'matic',
+		'udDNia_66u_xVjkV4F97GyZv14rVLbCt',
+	);
+
+	interface Bond {
+		depositDate: number;
+		amount: number;
+		withdrawn: number;
+	}
 
 	async function getContract() {
 		if (isConnected && provider && chainId && contractData) {
@@ -68,30 +85,6 @@ const BondingCard: any = (props: any) => {
 	function fillMaxTokens() {
 		setAmountToDeposit(heldSWX);
 	}
-
-	async function getBalances() {
-		if (contract?.read?.balanceAvailable && address) {
-			console.log(contract?.read);
-			const tempWithdrawAmount: any = await contract?.read?.balanceAvailable(address);
-			setWithdrawAmount(tempWithdrawAmount);
-			console.log({ tempWithdrawAmount });
-			let tempbal: any = ethers.utils.parseEther(tempWithdrawAmount.toString());
-			tempbal = tempbal.toLocaleString('en-us', { minimumFractionDigits: 2 });
-			setDisplayWithdrawAmount(tempbal.toLocaleString());
-		}
-	}
-
-	useEffect(() => {
-		getBalances();
-	}, [contract, address]);
-
-	const depositMinMax = (value: any) => {
-		// max is heldSWX
-		// min is 0
-		// return !validInput.test(value) || value < 0 || value > 20 || typeof value == 'undefined'
-		// 	? null
-		// 	: value;
-	};
 
 	function handleAmountToDeposit(value: any) {
 		console.log('Handling Change');
@@ -156,88 +149,95 @@ const BondingCard: any = (props: any) => {
 		setBondsPage(event.selected + 1);
 	}
 
-	const bonds = [
-		{
-			depositDate: '20/10/2022',
-			amount: 100,
-			maturationDate: '20/10/2024',
-		},
-		{
-			depositDate: '21/10/2022',
-			amount: 100,
-			maturationDate: '21/10/2024',
-		},
-		{
-			depositDate: '22/10/2022',
-			amount: 100,
-			maturationDate: '22/10/2024',
-		},
-		{
-			depositDate: '23/10/2022',
-			amount: 100,
-			maturationDate: '23/10/2024',
-		},
-		{
-			depositDate: '24/10/2022',
-			amount: 100,
-			maturationDate: '24/10/2024',
-		},
-		{
-			depositDate: '25/10/2022',
-			amount: 100,
-			maturationDate: '25/10/2024',
-		},
-		{
-			depositDate: '26/10/2022',
-			amount: 100,
-			maturationDate: '26/10/2024',
-		},
-		{
-			depositDate: '27/10/2022',
-			amount: 100,
-			maturationDate: '27/10/2024',
-		},
-		{
-			depositDate: '30/10/2022',
-			amount: 100,
-			maturationDate: '30/10/2024',
-		},
-		{
-			depositDate: '31/10/2022',
-			amount: 100,
-			maturationDate: '31/10/2024',
-		},
-		{
-			depositDate: '1/10/2022',
-			amount: 100,
-			maturationDate: '1/10/2024',
-		},
-		{
-			depositDate: '2/10/2022',
-			amount: 100,
-			maturationDate: '2/10/2024',
-		},
-		{
-			depositDate: '3/10/2022',
-			amount: 100,
-			maturationDate: '3/10/2024',
-		},
-		{
-			depositDate: '4/10/2022',
-			amount: 100,
-			maturationDate: '4/10/2024',
-		},
-		{
-			depositDate: '5/10/2022',
-			amount: 100,
-			maturationDate: '5/10/2024',
-		},
-		{
-			depositDate: '6/10/2022',
-			amount: 100,
-			maturationDate: '6/10/2024',
-		},
-	];
+	const getRewardPercent = async () => {
+		console.log(contract?.read?.address);
+		const thisAddress = contract?.read?.address;
+		if (typeof provider == 'undefined') {
+			return null;
+		}
+		if (provider == null) {
+			return null;
+		}
+		const slot0: any = await alchemyProvider.getStorageAt(
+			`${thisAddress}`,
+			ethers.BigNumber.from('0'),
+		);
+		const bonusMin: any = ethers.BigNumber.from(ethers.utils.hexDataSlice(slot0, 21, 22));
+		const bonusMax: any = ethers.BigNumber.from(ethers.utils.hexDataSlice(slot0, 20, 21));
+		const bonusModifier: any = ethers.BigNumber.from(ethers.utils.hexDataSlice(slot0, 6, 20));
+		const bonusResetDate: any = ethers.BigNumber.from(ethers.utils.hexDataSlice(slot0, 0, 6));
+		const now: any = ethers.BigNumber.from(`${Math.floor(Date.now() / 1000)}`);
+		const bonusRawThing: any = ethers.BigNumber.from(`${(now - bonusResetDate) * bonusModifier}`);
+		const bonusRaw: any = Math.floor(bonusRawThing.div('1000000000000000000').add(bonusMin));
+		const rate = bonusRaw > bonusMax ? bonusMax : bonusRaw;
+		setRewardRate(`${rate}.00`);
+		const thisAPY = 10 * (Math.sqrt(rate + 100) - 10);
+		setAPY(thisAPY.toString().substring(0, 4));
+		setMPY((100 * Math.pow(thisAPY / 100 + 1, 1 / 12) - 100).toString().substring(0, 4));
+		setWPY((100 * Math.pow(thisAPY / 100 + 1, 1 / 52) - 100).toString().substring(0, 4));
+	};
+
+	async function getBalances() {
+		if (contract?.read?.balanceAvailable && address) {
+			console.log(contract?.read);
+			const tempWithdrawAmount: any = await contract?.read?.balanceAvailable(address);
+			setWithdrawAmount(tempWithdrawAmount);
+			console.log({ tempWithdrawAmount });
+			let tempbal: any = ethers.utils.parseEther(tempWithdrawAmount.toString());
+			tempbal = tempbal.toLocaleString('en-us', { minimumFractionDigits: 2 });
+			setDisplayWithdrawAmount(tempbal.toLocaleString());
+		}
+	}
+
+	const getBondsPage = async (page: number) => {
+		const bondsAddress = contract?.read?.address;
+		console.log({ bondsAddress });
+		const bondsArrayHashData = ethers.utils.concat([
+			ethers.utils.zeroPad(bondsAddress, 32),
+			ethers.utils.zeroPad('0x01', 32),
+		]);
+		const bondsArraySlot: any = ethers.utils.keccak256(bondsArrayHashData);
+		const bondsArrayFirstSlot: any = ethers.BigNumber.from(ethers.utils.keccak256(bondsArraySlot));
+		// const totalBonds: any = ethers.BigNumber.from(
+		// 	await contract?.read?.getStorageAt(amountToView, bondsArraySlot),
+		// ).toNumber();
+		const bondsThing: any = await alchemyProvider.getStorageAt(bondsAddress, bondsArraySlot);
+		console.log({ bondsThing });
+		// HERE: Check to make sure there are enough bonds to render the selected page.
+		const bonds: Bond[] = [];
+		const bondsArrayFirstPageSlot: ethers.BigNumber = bondsArrayFirstSlot.add(page * amountToView);
+		console.log({ bondsArrayFirstPageSlot });
+		// for (let i = 0; i < amountToView; i++) {
+		// 	const bond: ethers.BytesLike = await contract?.read?.getStorageAt(
+		// 		contract?.read?.address,
+		// 		bondsArrayFirstPageSlot.add(i),
+		// 	);
+		// 	const depositDate: number = ethers.BigNumber.from(
+		// 		ethers.utils.hexDataSlice(bond, 0, 11),
+		// 	).toNumber();
+		// 	const amount: number = ethers.BigNumber.from(
+		// 		ethers.utils.hexDataSlice(bond, 12, 21),
+		// 	).toNumber();
+		// 	const withdrawn: number = ethers.BigNumber.from(
+		// 		ethers.utils.hexDataSlice(bond, 22, 31),
+		// 	).toNumber();
+		// 	bonds.push({ depositDate, amount, withdrawn });
+		// }
+		// console.log({ bonds });
+	};
+
+	useEffect(() => {
+		getBalances();
+		if (typeof contract !== 'undefined') {
+			getRewardPercent();
+		}
+	}, [contract, address, provider]);
+
+	useEffect(() => {
+		if (typeof address !== 'undefined' && address !== null) {
+			getBondsPage(bondsPage);
+		}
+	}, [address, bondsPage]);
 
 	return (
 		<>
@@ -323,7 +323,7 @@ const BondingCard: any = (props: any) => {
 							</Box>
 							<br />
 							{bonds?.length > 0 &&
-								bonds.map((bond, index) => {
+								bonds.map((bond: any, index: number) => {
 									if (index < amountToView * bondsPage && index >= amountToView * (bondsPage - 1)) {
 										return (
 											<Box
@@ -339,34 +339,18 @@ const BondingCard: any = (props: any) => {
 									}
 								})}
 							{bonds?.length > amountToView && (
-								<Box className={styles.bondTablePages}>
-									{bonds.map((bond, index) => {
-										return (
-											<>
-												<Text
-													onClick={() => setBondsPage(1)}
-													sx={{ color: `#857AFD` }}
-													_hover={{ color: `#AADCFE` }}
-												>
-													1
-												</Text>
-												<Text
-													onClick={() => setBondsPage(2)}
-													sx={{ color: `#857AFD` }}
-													_hover={{ color: `#AADCFE` }}
-												>
-													2
-												</Text>
-												<Text
-													onClick={() => setBondsPage(3)}
-													sx={{ color: `#857AFD` }}
-													_hover={{ color: `#AADCFE` }}
-												>
-													3
-												</Text>
-											</>
-										);
-									})}
+								<Box className={styles.bondTablePages} style={{ width: '100%' }}>
+									<ReactPaginate
+										breakLabel="..."
+										nextLabel="next >"
+										onPageChange={handlePageClick}
+										pageRangeDisplayed={5}
+										pageCount={Math.floor(
+											bonds?.length / amountToView + (bonds?.length % amountToView === 0 ? 0 : 1),
+										)}
+										previousLabel="< previous"
+										renderOnZeroPageCount={undefined}
+									/>
 								</Box>
 							)}
 						</Box>

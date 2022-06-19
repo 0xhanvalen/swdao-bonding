@@ -110,12 +110,16 @@
 
 .bondTablePages {
     font-size: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+
     width: 80%;
     margin: 1em auto;
     &:hover {
         cursor: pointer;
+    }
+    ul {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
     }
 }
