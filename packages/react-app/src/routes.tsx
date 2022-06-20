@@ -4,6 +4,7 @@ import { PortfolioPage } from './components/pages/PortfolioPage';
 import { ProductDetailsPage } from './components/pages/ProductDetailsPage';
 import { ProductListPage } from './components/pages/ProductListPage/ProductListPage';
 import { SWDTokenPage } from './components/pages/SWDTokenPage';
+import BondingPage from './components/pages/BondingPage';
 import { getTokenName } from './utils';
 
 interface SymbolPath {
@@ -43,6 +44,10 @@ export const routeDetails: RouteDetails = {
 	'/portfolio': {
 		component: () => <PortfolioPage />,
 		title: () => 'SW DAO | Portfolio Balance',
+	},
+	'/bonding': {
+		component: () => <BondingPage />,
+		title: () => 'SW DAO | Bonding',
 	},
 };
 

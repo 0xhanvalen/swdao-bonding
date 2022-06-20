@@ -27,7 +27,7 @@ const heights =
 interface FullHeightPageProps {
 	outerClass?: string;
 	innerClass?: string;
-	children: React.ReactNode;
+	children?: React.ReactNode;
 	pageKey?: string;
 	className?: string;
 	bgColor?: string;
